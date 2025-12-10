@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref,watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import ActionSelect from './components/ActionSelect.vue'
 import PaymentForm from './components/PaymentForm.vue'
 import PaymentMethodSelect from './components/PaymentMethodSelect.vue'
@@ -7,11 +7,15 @@ import WalletSelect from './components/WalletSelect.vue'
 import { onMounted } from 'vue'
 import { useRoute } from "vue-router";
 import { useWalletStore } from '@/stores/wallets'
+import { useTransactionsStore } from '@/stores/transactions'
+
 
 type Step = 'wallet' | 'action' | 'method' | 'form'
 
 const route = useRoute()
-const walletStore = useWalletStore() 
+const walletStore = useWalletStore()
+const transactions = useTransactionsStore()
+
 
 // const wallets = [
 //   {
@@ -86,7 +90,7 @@ const methods = [
   },
 ]
 const storemethods = computed(() => walletStore.methods)
-console.log("r",storemethods)
+console.log("r", storemethods)
 onMounted(() => {
   const token = (route.query.token as string) || ''
   const plataformId = Number(route.query.plataformId || route.query.platformId)
@@ -172,15 +176,35 @@ const selectMethod = (id: number) => {
   step.value = 'form'
 }
 
-const handleSubmit = (payload: { amount: number; fullName: string; email: string }) => {
+const handleSubmit = async (payload: { amount: number; fullName: string; email: string }) => {
   // Aqui se podria conectar con el backend; dejamos el emit de datos listo.
-  console.info('Datos listos para enviar', {
-    ...payload,
-    wallet: currentWallet.value?.name ?? 'N/D',
-    action: selectedAction.value,
-    method: selectedAction.value === 'withdraw' ? 'Retiro' : currentMethod.value?.name ?? 'N/D',
-  })
-  alert('Pago generado (demo). Conecta tu backend para completar el flujo.')
+  const body = {
+    clientId: 4,
+    walletId: 1,
+    amount: payload.amount,
+    type: "payment",
+    token: String(route.query.token),
+    coin: String(route.query.coin)
+  }
+  try {
+    const respuesta = await transactions.createTransaction(body)
+    console.log("Transacción generada:", respuesta)
+
+    console.info('Datos listos para enviar', {
+      ...payload,
+      wallet: currentWallet.value?.name ?? 'N/D',
+      action: selectedAction.value,
+      method: selectedAction.value === 'withdraw'
+        ? 'Retiro'
+        : currentMethod.value?.name ?? 'N/D',
+    })
+
+    alert('Pago generado correctamente.')
+
+  } catch (err) {
+    console.error("Error al generar la transacción:", err)
+    alert("Hubo un error creando la transacción.")
+  }
 }
 </script>
 
@@ -194,13 +218,7 @@ const handleSubmit = (payload: { amount: number; fullName: string; email: string
       <div class="header">
         <div>
           <div class="title-row">
-            <button
-              v-if="stepPosition > 1"
-              type="button"
-              class="circle-btn"
-              aria-label="Volver"
-              @click="goPrevStep"
-            >
+            <button v-if="stepPosition > 1" type="button" class="circle-btn" aria-label="Volver" @click="goPrevStep">
               <span>&lt;</span>
             </button>
             <p class="eyebrow">Paralela de pagos</p>
@@ -211,33 +229,17 @@ const handleSubmit = (payload: { amount: number; fullName: string; email: string
       </div>
 
       <div class="content">
-        <WalletSelect
-          v-if="step === 'wallet'"
-          :wallets="storeWallets"
-          :selected-id="selectedWallet"
-          @select="selectWallet"
-        />
+        <WalletSelect v-if="step === 'wallet'" :wallets="storeWallets" :selected-id="selectedWallet"
+          @select="selectWallet" />
 
-        <ActionSelect
-          v-else-if="step === 'action'"
-          :actions="actions"
-          :selected-id="selectedAction"
-          @select="selectAction"
-        />
+        <ActionSelect v-else-if="step === 'action'" :actions="actions" :selected-id="selectedAction"
+          @select="selectAction" />
 
-        <PaymentMethodSelect
-          v-else-if="step === 'method'"
-          :methods="storemethods"
-          :selected-id="selectedMethod"
-          @select="selectMethod"
-        />
+        <PaymentMethodSelect v-else-if="step === 'method'" :methods="storemethods" :selected-id="selectedMethod"
+          @select="selectMethod" />
 
-        <PaymentForm
-          v-else
-          :method-label="methodLabel"
-          :wallet-label="currentWallet?.name ?? 'Billetera'"
-          @submit="handleSubmit"
-        />
+        <PaymentForm v-else :method-label="methodLabel" :wallet-label="currentWallet?.name ?? 'Billetera'"
+          @submit="handleSubmit" />
       </div>
     </section>
   </main>
