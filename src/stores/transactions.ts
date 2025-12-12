@@ -22,14 +22,12 @@ export const useTransactionsStore = defineStore('transactions', {
       this.error = null
 
       try {
-        const domain = localStorage.getItem("domain") // o usa tu getter si lo tienes
-        const url = `${domain}/transactions`
         const res = await api.post('transactions',payload)
         // const res = await axios.post(url, payload)
 
         this.lastTransaction = res.data
-        return res.data
-
+        console.log("a",res.data)
+        return res.data.data.uuidTransaction
       } catch (err: any) {
         this.error = err?.response?.data?.message || "Error creando transacción"
         throw err

@@ -1,52 +1,22 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import ActionSelect from './components/ActionSelect.vue'
 import PaymentForm from './components/PaymentForm.vue'
 import PaymentMethodSelect from './components/PaymentMethodSelect.vue'
 import WalletSelect from './components/WalletSelect.vue'
-import { onMounted } from 'vue'
-import { useRoute } from "vue-router";
+import { useRoute } from 'vue-router'
 import { useWalletStore } from '@/stores/wallets'
 import { useTransactionsStore } from '@/stores/transactions'
+import { processTonderPayment} from '@/services/tonder'
 
 
 type Step = 'wallet' | 'action' | 'method' | 'form'
+
 
 const route = useRoute()
 const walletStore = useWalletStore()
 const transactions = useTransactionsStore()
 
-
-// const wallets = [
-//   {
-//     id: 'tonder',
-//     name: 'Tonder',
-//     subtitle: 'Billetera principal',
-//     badge: 'T',
-//     accent: 'linear-gradient(135deg, #d9e8ff, #bcd1ff)',
-//   },
-//   {
-//     id: 'nequi',
-//     name: 'Nequi',
-//     subtitle: 'Pagos al instante',
-//     badge: 'N',
-//     accent: 'linear-gradient(135deg, #ffdce6, #f7bbff)',
-//   },
-//   {
-//     id: 'bank',
-//     name: 'Otra Billetera',
-//     subtitle: 'Transferencia segura',
-//     badge: 'B',
-//     accent: 'linear-gradient(135deg, #e0f8ef, #c3eddc)',
-//   },
-//   {
-//     id: 'new',
-//     name: 'Agregar Nueva',
-//     subtitle: 'Conecta en segundos',
-//     badge: '+',
-//     accent: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-//   },
-// ]
 const storeWallets = computed(() => walletStore.wallets)
 
 const actions = [
@@ -66,31 +36,33 @@ const actions = [
   },
 ]
 
-const methods = [
-  {
-    id: 'spei',
-    title: 'SPEI',
-    description: 'Inmediato a bancos',
-    tag: 'Recomendado',
-    accent: '#2563eb',
-  },
-  {
-    id: 'oxxo',
-    title: 'Oxxo',
-    description: 'En efectivo en tienda',
-    tag: 'Comercio',
-    accent: '#ea580c',
-  },
-  {
-    id: 'cash',
-    title: 'Efectivo / Cash',
-    description: 'Puntos fisicos',
-    tag: 'Presencial',
-    accent: '#0ea5e9',
-  },
-]
-const storemethods = computed(() => walletStore.methods)
-console.log("r", storemethods)
+// const paymentMethods: PaymentMethodOption[] = [
+//   {
+//     id: 'spei',
+//     title: 'SPEI',
+//     description: 'Inmediato a bancos',
+//     tag: 'Recomendado',
+//     accent: '#2563eb',
+//   },
+//   {
+//     id: 'oxxo',
+//     title: 'Oxxo',
+//     description: 'En efectivo en tienda',
+//     tag: 'Comercio',
+//     accent: '#ea580c',
+//   },
+//   {
+//     id: 'cash',
+//     title: 'Efectivo / Cash',
+//     description: 'Puntos fisicos',
+//     tag: 'Presencial',
+//     accent: '#0ea5e9',
+//   },
+// ]
+// const storeMethods = computed<PaymentMethodOption[]>(() => paymentMethods)
+const storeMethods = computed(() => walletStore.methods)
+
+
 onMounted(() => {
   const token = (route.query.token as string) || ''
   const plataformId = Number(route.query.plataformId || route.query.platformId)
@@ -125,7 +97,7 @@ const stepOrder = computed<Step[]>(() =>
 )
 
 const currentWallet = computed(() => storeWallets.value.find((wallet) => wallet.id === selectedWallet.value))
-const currentMethod = computed(() => storemethods.value.find((method) => method.id === selectedMethod.value))
+const currentMethod = computed(() => storeMethods.value.find((method) => method.id === selectedMethod.value))
 
 const stepTitle = computed(() => {
   if (step.value === 'action') {
@@ -177,33 +149,48 @@ const selectMethod = (id: number) => {
 }
 
 const handleSubmit = async (payload: { amount: number; fullName: string; email: string }) => {
-  // Aqui se podria conectar con el backend; dejamos el emit de datos listo.
+  if (selectedAction.value === "withdraw") {
+    alert("El flujo de retiro aun no esta implementado.")
+    return
+  }
+  if (!selectedMethod.value) {
+    alert("Selecciona un metodo de pago.")
+    return
+  }
+
   const body = {
-    clientId: 4,
-    walletId: 1,
+    clientId: Number((walletStore as any).user?.id ?? route.query.clientId ?? 0),
+    walletId: Number(selectedWallet.value ?? walletStore.wallets[0]?.id ?? 0),
     amount: payload.amount,
     type: "payment",
-    token: String(route.query.token),
-    coin: String(route.query.coin)
+    token: String(route.query.token ?? ""),
+    coin: String(route.query.currency ?? ""),
   }
   try {
-    const respuesta = await transactions.createTransaction(body)
-    console.log("Transacción generada:", respuesta)
+    const customerId = await transactions.createTransaction(body)
+    console.info("Transaccion generada en backend:", customerId)
+
+    const message = await processTonderPayment({
+      amount: payload.amount,
+      fullName: payload.fullName,
+      email: payload.email,
+      methodId: "oxxopay",
+      customerId: String(customerId),
+      currency: (route.query.currency as string) || "MXN",
+    })
 
     console.info('Datos listos para enviar', {
       ...payload,
       wallet: currentWallet.value?.name ?? 'N/D',
       action: selectedAction.value,
-      method: selectedAction.value === 'withdraw'
-        ? 'Retiro'
-        : currentMethod.value?.name ?? 'N/D',
+      method: currentMethod.value?.name ?? 'N/D',
     })
 
-    alert('Pago generado correctamente.')
+    alert(message)
 
   } catch (err) {
-    console.error("Error al generar la transacción:", err)
-    alert("Hubo un error creando la transacción.")
+    console.error('Error al generar la transaccion o iniciar el pago:', err)
+    alert('Hubo un error creando la transaccion o iniciando el pago.')
   }
 }
 </script>
@@ -235,7 +222,7 @@ const handleSubmit = async (payload: { amount: number; fullName: string; email: 
         <ActionSelect v-else-if="step === 'action'" :actions="actions" :selected-id="selectedAction"
           @select="selectAction" />
 
-        <PaymentMethodSelect v-else-if="step === 'method'" :methods="storemethods" :selected-id="selectedMethod"
+        <PaymentMethodSelect v-else-if="step === 'method'" :methods="storeMethods" :selected-id="selectedMethod"
           @select="selectMethod" />
 
         <PaymentForm v-else :method-label="methodLabel" :wallet-label="currentWallet?.name ?? 'Billetera'"
@@ -387,3 +374,4 @@ h1 {
   }
 }
 </style>
+

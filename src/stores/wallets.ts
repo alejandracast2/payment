@@ -15,7 +15,7 @@ interface WalletState {
   loading: boolean
   error: string | null
   methods:Wallet[]
-  user:{}
+  user: Wallet | null
 }
 
 export const useWalletStore = defineStore('wallets', {
@@ -26,7 +26,7 @@ export const useWalletStore = defineStore('wallets', {
     loading: false,
     error: null,
     methods:[],
-    user:{}
+    user: null
   }),
   actions: {
     setAuth(plataformId: number, token: string) {
@@ -47,8 +47,8 @@ export const useWalletStore = defineStore('wallets', {
         })
         this.wallets = res.data.data.wallets
         this.methods= res.data.data.wallets[0].paymetsMethods
-        this.user =res.data.user
-        console.log("ale",this.methods)
+        this.user =res.data.data.user
+        console.log("ale",this.user)
       } catch (err: any) {
         this.error = err?.response?.data?.message ?? err?.message ?? 'Error desconocido'
       } finally {
