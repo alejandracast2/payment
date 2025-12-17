@@ -1,6 +1,3 @@
-/* Tonder SDK Lite helpers en TypeScript */
-// Se asume que el script de TonderSdk está incluido vía CDN y expone window.TonderSdk
-
 export type PaymentMethodId = 'Oxxo' | 'SPEI' | 'Efectivo'
 
 type BrowserInfo = {
