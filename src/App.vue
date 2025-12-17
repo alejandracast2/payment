@@ -7,7 +7,8 @@ import WalletSelect from './components/WalletSelect.vue'
 import { useRoute } from 'vue-router'
 import { useWalletStore } from '@/stores/wallets'
 import { useTransactionsStore } from '@/stores/transactions'
-import { processTonderPayment} from '@/services/tonder'
+import { processTonderPayment } from '@/services/tonder'
+import { processSpeiPayment } from '@/services/spei'
 
 
 type Step = 'wallet' | 'action' | 'method' | 'form'
@@ -36,30 +37,6 @@ const actions = [
   },
 ]
 
-// const paymentMethods: PaymentMethodOption[] = [
-//   {
-//     id: 'spei',
-//     title: 'SPEI',
-//     description: 'Inmediato a bancos',
-//     tag: 'Recomendado',
-//     accent: '#2563eb',
-//   },
-//   {
-//     id: 'oxxo',
-//     title: 'Oxxo',
-//     description: 'En efectivo en tienda',
-//     tag: 'Comercio',
-//     accent: '#ea580c',
-//   },
-//   {
-//     id: 'cash',
-//     title: 'Efectivo / Cash',
-//     description: 'Puntos fisicos',
-//     tag: 'Presencial',
-//     accent: '#0ea5e9',
-//   },
-// ]
-// const storeMethods = computed<PaymentMethodOption[]>(() => paymentMethods)
 const storeMethods = computed(() => walletStore.methods)
 
 
@@ -174,15 +151,29 @@ const handleSubmit = async (payload: { amount: number; fullName: string; email: 
     const customerId = await transactions.createTransaction(body)
     console.info("Transaccion generada en backend:", customerId)
 
-    const message = await processTonderPayment({
-      amount: payload.amount,
-      fullName: payload.fullName,
-      email: payload.email,
-      methodId: "oxxopay",
-      customerId: String(customerId),
-      currency: (route.query.currency as string) || "MXN",
-    })
+    const walletName = (currentMethod.value?.name || '').toLowerCase()
+    let message = ''
+    console.log("name",walletName)
+    if (walletName === 'spei') {
 
+      message = await processSpeiPayment({
+        amount: payload.amount,
+        fullName: payload.fullName,
+        email: payload.email,
+        customerId: String(customerId),
+        currency: (route.query.currency as string) || "MXN",
+      })
+      
+    } 
+    if(walletName == "oxxo pay"){
+      message = await processTonderPayment({
+        amount: payload.amount,
+        fullName: payload.fullName,
+        email: payload.email,
+        customerId: String(customerId),
+        currency: (route.query.currency as string) || "MXN",
+      })
+    }
     console.info('Datos listos para enviar', {
       ...payload,
       wallet: currentWallet.value?.name ?? 'N/D',

@@ -1,7 +1,4 @@
-/* Tonder SDK Lite helpers en TypeScript */
-// Se asume que el script de TonderSdk está incluido vía CDN y expone window.TonderSdk
-
-export type PaymentMethodId = 'Oxxo' | 'SPEI' | 'Efectivo'
+import type { TonderPaymentPayload, TonderPaymentResponse } from './tonder'
 
 type BrowserInfo = {
   javascript_enabled: boolean
@@ -13,115 +10,21 @@ type BrowserInfo = {
   user_agent: string
 }
 
-type TonderPaymentItem = {
-  description: string
-  quantity: number
-  price_unit: number
-  discount: number
-  taxes: number
-  product_reference: string
-  name: string
-  amount_total: number
-}
-
-export type TonderPaymentPayload = {
-  customer: {
-    firstName: string
-    lastName: string
-    email: string
-    country: string
-    address: string
-    city: string
-    state: string
-    postCode: string
-    phone: string
-  }
-  name: string
-  last_name: string
-  email_client: string
-  phone_number: string
-  currency: string
-  cart: {
-    total: number
-    items: TonderPaymentItem[]
-  }
-  items: TonderPaymentItem[]
-  metadata: Record<string, string>
-  order_reference: string
-  order_id: number
-  payment_id: number
-  business_id: number
-  payment_method: string
-  return_url: string
-  id_product: string
-  quantity_product: number
-  id_ship: string
-  instance_id_ship: string
-  title_ship: string
-  description: string
-  device_session_id: string | null
-  token_id: string
-  source: string
-  browser_info: BrowserInfo
-  identification: {
-    type: string
-    number: string
-  }
-  apm_config: Record<string, unknown>
-  amount?: number
-}
-
-export type TonderPaymentResponse = {
-  status?: number
-  message?: string
-  error?: string
-  checkout_url?: string
-  payment_url?: string
-  redirect_url?: string
-  reference?: string
-  payment_reference?: string
-  checkout_id?: string
-  next_action?: {
-    redirect_to_url?: {
-      url?: string
-    }
-  }
-  [key: string]: unknown
-}
-
-interface LiteInlineCheckout {
+type LiteInlineCheckout = {
   injectCheckout: () => Promise<void>
   configureCheckout: (config: { customer: { firstName: string; lastName: string; email: string } }) => Promise<void> | void
   payment: (payload: TonderPaymentPayload) => Promise<TonderPaymentResponse>
 }
 
-interface LiteInlineCheckoutCtor {
-  new (config: { mode: string; apiKey: string; returnUrl: string }): LiteInlineCheckout
-}
-
-interface TonderSdkGlobal {
-  LiteInlineCheckout: LiteInlineCheckoutCtor
-}
+type LiteInlineCheckoutCtor = new (config: { mode: string; apiKey: string; returnUrl: string }) => LiteInlineCheckout
 
 declare global {
   interface Window {
-    TonderSdk?: TonderSdkGlobal
+    TonderSdk?: {
+      LiteInlineCheckout: LiteInlineCheckoutCtor
+    }
   }
 }
-
-const TONDER_CONFIG = {
-  mode: 'stage',
-  apiKey: '1cccb499af3ad62bfb10a6efab1b07910b0bc39b',
-  returnUrl: 'https://tonder.live/customer/sdklite-migallo/',
-}
-
-const PAYMENT_METHOD_MAP: Record<PaymentMethodId, string> = {
-  Oxxo: 'oxxopay',
-  SPEI: 'spei',
-  Efectivo: 'cash',
-}
-
-let liteCheckout: LiteInlineCheckout | null = null
 let scriptsLoaded = false
 
 const loadScript = (src: string) =>
@@ -142,21 +45,45 @@ const loadExternalScripts = async () => {
   scriptsLoaded = true
 }
 
+
+const TONDER_CONFIG = {
+  mode: 'stage',
+  apiKey: '1cccb499af3ad62bfb10a6efab1b07910b0bc39b',
+  returnUrl: 'https://tonder.live/customer/sdklite-migallo/',
+}
+
+let liteCheckout: LiteInlineCheckout | null = null
+
+const waitForTonderSDK = () =>
+  new Promise<void>((resolve) => {
+    const check = () => {
+      if (window.TonderSdk?.LiteInlineCheckout) {
+        resolve()
+        return
+      }
+      setTimeout(check, 100)
+    }
+    check()
+  })
+
 const getBrowserInfo = (): BrowserInfo => ({
   javascript_enabled: true,
   time_zone: new Date().getTimezoneOffset(),
-  language: navigator.language || 'en-US',
+  language: navigator.language || 'es-MX',
   color_depth: window.screen?.colorDepth ?? 24,
   screen_width: window.screen?.width ?? 0,
   screen_height: window.screen?.height ?? 0,
   user_agent: navigator.userAgent,
 })
 
-const ensureLiteCheckout = async (): Promise<LiteInlineCheckout> => {
+const initializeSDK = async (): Promise<LiteInlineCheckout> => {
+  // await waitForTonderSDK()
   await loadExternalScripts()
+  // if (liteCheckout) return liteCheckout
+
   const ctor = window.TonderSdk?.LiteInlineCheckout
   if (!ctor) {
-    throw new Error('Tonder SDK Lite no está disponible. Asegúrate de cargar el script de TonderSdk.')
+    throw new Error('Tonder SDK Lite no esta disponible. Carga el script de TonderSdk antes de continuar.')
   }
   if (!liteCheckout) {
     liteCheckout = new ctor({
@@ -171,32 +98,29 @@ const ensureLiteCheckout = async (): Promise<LiteInlineCheckout> => {
 
 const splitName = (fullName: string) => {
   const parts = fullName.trim().split(/\s+/)
-  const firstName = parts[0] ?? 'Nombre'
+  const firstName = parts[0] || 'Nombre'
   const lastName = parts.slice(1).join(' ') || 'Apellido'
   return { firstName, lastName }
 }
 
-const buildPaymentPayload = (params: {
-  amount: number
+const buildPaymentData = (params: {
   firstName: string
   lastName: string
   email: string
-  paymentMethod: string
+  amount: number
   customerId: string
   currency: string
 }): TonderPaymentPayload => {
-  const items: TonderPaymentItem[] = [
-    {
-      description: 'Product',
-      quantity: 1,
-      price_unit: params.amount,
-      discount: 0,
-      taxes: 0,
-      product_reference: 'PROD001',
-      name: 'Tonder Product',
-      amount_total: params.amount,
-    },
-  ]
+  const item = {
+    description: 'Product',
+    quantity: 1,
+    price_unit: params.amount,
+    discount: 0,
+    taxes: 0,
+    product_reference: 'PROD001',
+    name: 'Tonder Product',
+    amount_total: params.amount,
+  }
 
   const orderId = Math.floor(Date.now() / 1000)
   const paymentId = Math.floor(Math.random() * 90000) + 10000
@@ -209,7 +133,7 @@ const buildPaymentPayload = (params: {
       email: params.email,
       country: 'Mexico',
       address: 'Calle Principal 123',
-      city: 'Ciudad de México',
+      city: 'Ciudad de Mexico',
       state: 'CDMX',
       postCode: '01000',
       phone: '3025551234',
@@ -221,19 +145,20 @@ const buildPaymentPayload = (params: {
     currency: params.currency || 'MXN',
     cart: {
       total: params.amount,
-      items,
+      items: [item],
     },
-    items,
+    items: [item],
     metadata: {
       operation_date: new Date().toISOString(),
       customer_email: params.email,
+      business_user: 'tonder_user',
       customer_id: params.customerId,
     },
     order_reference: orderReference,
     order_id: orderId,
     payment_id: paymentId,
     business_id: 21,
-    payment_method: params.paymentMethod,
+    payment_method: 'Spei',
     return_url: TONDER_CONFIG.returnUrl,
     id_product: 'no_id',
     quantity_product: 1,
@@ -256,8 +181,9 @@ const buildPaymentPayload = (params: {
 
 const handlePaymentResponse = (response: TonderPaymentResponse) => {
   if (response.status === 500) {
-    throw new Error(response.message || 'Error del proveedor. Intenta nuevamente.')
+    throw new Error(response.message || 'Error del proveedor.')
   }
+
   if (response.error) {
     throw new Error(response.error)
   }
@@ -269,29 +195,26 @@ const handlePaymentResponse = (response: TonderPaymentResponse) => {
     response.redirect_url
 
   if (redirectUrl) {
-    window.open(redirectUrl, '_blank')
-    return 'Redirigiendo a la página de pago...'
-  }
-
-  if (response.reference || response.payment_reference) {
-    return `Referencia generada: ${response.reference ?? response.payment_reference}`
+    window.location.href = redirectUrl
+    return 'Redirigiendo a la pagina de SPEI...'
   }
 
   if (response.checkout_id) {
     return `Pago procesado. Checkout ID: ${response.checkout_id}`
   }
 
-  return 'Pago procesado. Revisa la consola para más detalles.'
+  return 'Pago procesado. Revisa la consola para mas detalles.'
 }
 
-export const processTonderPayment = async (params: {
+export const processSpeiPayment = async (params: {
   amount: number
   fullName: string
   email: string
   customerId: string
   currency?: string
 }) => {
-  const checkout = await ensureLiteCheckout()
+  console.log('[SPEI] Iniciando flujo SPEI', params)
+  const checkout = await initializeSDK()
   const { firstName, lastName } = splitName(params.fullName)
 
   await checkout.configureCheckout({
@@ -302,17 +225,17 @@ export const processTonderPayment = async (params: {
     },
   })
 
-  const payload = buildPaymentPayload({
-    amount: params.amount,
+  const payload = buildPaymentData({
     firstName,
     lastName,
     email: params.email,
-    paymentMethod: "oxxopay",
+    amount: params.amount,
     customerId: params.customerId,
     currency: params.currency || 'MXN',
   })
 
+  console.log('[SPEI] Payload preparado', payload)
   const response = await checkout.payment(payload)
+  console.log('[SPEI] Respuesta recibida', response)
   return handlePaymentResponse(response)
 }
-

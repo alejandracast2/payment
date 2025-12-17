@@ -23,31 +23,19 @@ const handleSelect = (id: number) => {
 
 <template>
   <div class="list">
-    <label
-      v-for="method in props.methods"
-      :key="method.id"
-      class="item"
+    <label v-for="method in props.methods" :key="method.id" class="item"
       :class="{ active: props.selectedId === method.id }"
-      :style="{ borderColor: props.selectedId === method.id ? `${method.accent ?? '#3B8EED'}40` : 'transparent' }"
-    >
-      <input
-        type="radio"
-        name="payment-method"
-        :value="method.id"
-        :checked="props.selectedId === method.id"
-        @change="handleSelect(method.id)"
-      />
+      :style="{ borderColor: props.selectedId === method.id ? `${method.accent ?? '#3B8EED'}40` : 'transparent' }">
+      <input type="radio" name="payment-method" :value="method.id" :checked="props.selectedId === method.id"
+        @change="handleSelect(method.id)" />
       <div class="bullet" :style="{ borderColor: method.accent ?? '#3B8EED' }">
         <span :style="{ background: props.selectedId === method.id ? method.accent ?? '#3B8EED' : '#e5e7eb' }" />
       </div>
       <div class="info">
         <div class="row">
           <span class="name">{{ method.name }}</span>
-          <!-- <span v-if="method.tag" class="tag" :style="{ background: `${method.accent ?? '#3B8EED'}12`, color: method.accent ?? '#3B8EED' }">
-            {{ method.tag }}
-          </span> -->
+
         </div>
-        <!-- <p v-if="method.description" class="description">{{ method.description }}</p> -->
       </div>
     </label>
   </div>
