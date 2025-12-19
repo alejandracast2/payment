@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive,computed } from 'vue'
 
 const props = defineProps<{
   methodLabel: string
   walletLabel: string
+  loading?:boolean
 }>()
 
 const emit = defineEmits<{
@@ -20,9 +21,16 @@ const form = reactive({
   amount: '',
   fullName: '',
   email: '',
+  store: '',
+})
+
+const isFormValid = computed(() => {
+  const amount = Number(form.amount)
+  return Boolean(amount > 0 && form.fullName.trim().length > 0 && form.email.trim().length > 0)
 })
 
 const handleSubmit = () => {
+  if (!isFormValid.value || props.loading) return
   emit('submit', {
     amount: Number(form.amount || 0),
     fullName: form.fullName.trim(),
@@ -53,7 +61,52 @@ const handleSubmit = () => {
       <input v-model="form.email" required type="email" placeholder="ejemplo@email.com" />
     </label>
 
-    <button type="submit" class="cta">Generar Pago</button>
+    <label v-if="props.methodLabel === 'Efectivo'" class="field">
+      <span>🏪 Selecciona dónde pagarás</span>
+      <select v-model="form.store" required id="store" name="store">
+        <option value="">-- Selecciona una tienda --</option>
+
+        <option disabled class="store-category">🏦 BANCOS</option>
+        <option value="1020" data-name="BBVA Bancomer" data-channel="WP">BBVA Bancomer</option>
+        <option value="8395" data-name="Santander" data-channel="WP">Santander</option>
+        <option value="1007" data-name="Scotiabank" data-channel="WP">Scotiabank</option>
+        <option value="8186" data-name="Banco Azteca" data-channel="WP">Banco Azteca</option>
+
+        <option disabled class="store-category">🏪 TIENDAS DE CONVENIENCIA</option>
+        <option value="1140" data-name="Oxxo" data-channel="WP">Oxxo</option>
+        <option value="8178" data-name="7-Eleven" data-channel="WP">7-Eleven</option>
+        <option value="8178" data-name="CircleK" data-channel="WP">Circle K</option>
+        <option value="8178" data-name="Kiosko" data-channel="WP">Kiosko</option>
+
+        <option disabled class="store-category">🛒 SUPERMERCADOS</option>
+        <option value="8178" data-name="Walmart" data-channel="WP">Walmart</option>
+        <option value="8178" data-name="Bodega Aurrera" data-channel="WP">Bodega Aurrera</option>
+        <option value="8178" data-name="Sam's Club" data-channel="WP">Sam's Club</option>
+        <option value="8419" data-name="Soriana" data-channel="WP">Soriana</option>
+        <option value="8419" data-name="Calimax" data-channel="WP">Calimax</option>
+        <option value="8178" data-name="Extra" data-channel="WP">Extra</option>
+        <option value="8178" data-name="Waldo's" data-channel="WP">Waldo's</option>
+
+        <option disabled class="store-category">💊 FARMACIAS</option>
+        <option value="8419" data-name="Super Farmacia Santa Maria" data-channel="WP">Super Farmacia Santa María</option>
+        <option value="8419" data-name="Farmacia la Más Barata" data-channel="WP">Farmacia la Más Barata</option>
+        <option value="8419" data-name="Roma" data-channel="WP">Farmacia Roma</option>
+        <option value="8178" data-name="Farmacias de Ahorro" data-channel="WP">Farmacias del Ahorro</option>
+        <option value="8178" data-name="Super Farmacia Guadalajara" data-channel="WP">Farmacia Guadalajara</option>
+
+        <option disabled class="store-category">💳 SERVICIOS DE PAGO</option>
+        <option value="8178" data-name="GestoPago" data-channel="WP">GestoPago</option>
+        <option value="8178" data-name="Pago Rápido" data-channel="WP">Pago Rápido</option>
+        <option value="8178" data-name="OpenPay" data-channel="WP">OpenPay</option>
+        <option value="8419" data-name="PayCash" data-channel="WP">PayCash</option>
+      </select>
+      <div class="store-info" id="storeInfo"></div>
+    </label>
+
+    <button type="submit" class="cta" :disabled="!isFormValid || props.loading">
+      <span v-if="props.loading" class="spinner" aria-hidden="true" />
+      <span>{{ props.loading ? 'Generando...' : 'Generar Pago' }}</span>
+    </button>
   </form>
 </template>
 
@@ -104,7 +157,8 @@ const handleSubmit = () => {
   font-size: 14px;
 }
 
-.field input {
+.field input,
+.field select {
   padding: 12px 12px;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
@@ -116,11 +170,25 @@ const handleSubmit = () => {
     background 140ms ease;
 }
 
-.field input:focus {
+.field input:focus,
+.field select:focus {
   outline: none;
   border-color: #3f83f8;
   background: #fff;
   box-shadow: 0 0 0 3px rgba(63, 131, 248, 0.16);
+}
+
+.field select option {
+  color: #0f172a;
+}
+
+.store-category {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.store-info {
+  display: none;
 }
 
 .cta {
@@ -149,5 +217,31 @@ const handleSubmit = () => {
 
 .cta:active {
   transform: translateY(0);
+}
+.cta:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.cta .spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  display: inline-block;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>
