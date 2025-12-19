@@ -7,11 +7,6 @@ const props = defineProps<{
   loading?:boolean
 }>()
 
-type StoreInfo = {
-  id: string
-  name: string
-  channel: string
-}
 
 const emit = defineEmits<{
   submit: [
@@ -19,7 +14,6 @@ const emit = defineEmits<{
       amount: number
       fullName: string
       email: string
-      store: StoreInfo | null
     },
   ]
 }>()
@@ -32,30 +26,12 @@ const form = reactive({
 })
 
 const storeSelect = ref<HTMLSelectElement | null>(null)
-const storeInfo = ref<StoreInfo | null>(null)
 
-const updateStoreInfo = (event?: Event) => {
-  const select = (event?.target as HTMLSelectElement | null) ?? storeSelect.value
-  if (!select) return
 
-  const selectedOption = select.selectedOptions[0]
-  const storeName = selectedOption?.getAttribute('data-name') || ''
-  const channel = selectedOption?.getAttribute('data-channel') || ''
-  const storeId = select.value
-
-  if (storeId && storeName) {
-    storeInfo.value = { id: storeId, name: storeName, channel }
-    return
-  }
-
-  storeInfo.value = null
-}
 
 const isFormValid = computed(() => {
   const amount = Number(form.amount)
-  const requiresStore = props.methodLabel.toLowerCase() === 'efectivo'
-  const hasStore = !requiresStore || Boolean(storeInfo.value)
-  return Boolean(amount > 0 && form.fullName.trim().length > 0 && form.email.trim().length > 0 && hasStore)
+  return Boolean(amount > 0 && form.fullName.trim().length > 0 && form.email.trim().length > 0 )
 })
 
 const handleSubmit = () => {
@@ -64,7 +40,6 @@ const handleSubmit = () => {
     amount: Number(form.amount || 0),
     fullName: form.fullName.trim(),
     email: form.email.trim(),
-    store: storeInfo.value,
   })
 }
 </script>
@@ -91,7 +66,7 @@ const handleSubmit = () => {
       <input v-model="form.email" required type="email" placeholder="ejemplo@email.com" />
     </label>
 
-    <label v-if="props.methodLabel.toLowerCase() === 'efectivo'" class="field">
+    <!-- <label v-if="props.methodLabel.toLowerCase() === 'efectivo'" class="field">
       <span>🏪 Selecciona dónde pagarás</span>
       <select v-model="form.store" ref="storeSelect" required id="store" name="store" @change="updateStoreInfo">
         <option value="">-- Selecciona una tienda --</option>
@@ -134,7 +109,7 @@ const handleSubmit = () => {
         <strong>{{ storeInfo.name }}</strong><br />
         Tipo: Pago en Efectivo | Bank ID: {{ storeInfo.id }}
       </div>
-    </label>
+    </label> -->
 
     <button type="submit" class="cta" :disabled="!isFormValid || props.loading">
       <span v-if="props.loading" class="spinner" aria-hidden="true" />

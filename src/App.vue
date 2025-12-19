@@ -2,6 +2,7 @@
 import { computed, ref, watch, onMounted } from 'vue'
 import ActionSelect from './components/ActionSelect.vue'
 import PaymentForm from './components/PaymentForm.vue'
+import WithdrawForm from './components/WithdrawForm.vue'
 import PaymentMethodSelect from './components/PaymentMethodSelect.vue'
 import WalletSelect from './components/WalletSelect.vue'
 import { useRoute } from 'vue-router'
@@ -14,6 +15,13 @@ import { processCashPayment } from '@/services/cash'
 
 type Step = 'wallet' | 'action' | 'method' | 'form'
 type StoreSelection = { id: string; name: string; channel: string }
+type WithdrawFormPayload = {
+  amount: number
+  fullName: string
+  email: string
+  store: null
+  withdraw: Record<string, string | number>
+}
 
 
 const route = useRoute()
@@ -155,7 +163,6 @@ const handleSubmit = async (payload: {
   amount: number
   fullName: string
   email: string
-  store: StoreSelection | null
 }) => {
   if (isSubmitting.value) return
 
@@ -202,17 +209,12 @@ const handleSubmit = async (payload: {
         currency: (route.query.currency as string) || "MXN",
       })
     } else if (walletName === 'efectivo') {
-      if (!payload.store) {
-        alert('Selecciona un banco o tienda para efectivo.')
-        return
-      }
       message = await processCashPayment({
         amount: payload.amount,
         fullName: payload.fullName,
         email: payload.email,
         customerId: String(customerId),
-        currency: (route.query.currency as string) || 'MXN',
-        store: payload.store,
+        currency: (route.query.currency as string) || 'MXN'
       })
     }
     console.info('Datos listos para enviar', {
@@ -231,6 +233,12 @@ const handleSubmit = async (payload: {
   finally {
     isSubmitting.value = false
   }
+}
+
+const handleWithdrawSubmit = (payload: WithdrawFormPayload) => {
+  if (isSubmitting.value) return
+  console.info('Datos de retiro listos para enviar:', payload)
+  alert('El flujo de retiro aun no esta implementado.')
 }
 </script>
 
@@ -264,8 +272,11 @@ const handleSubmit = async (payload: {
         <PaymentMethodSelect v-else-if="step === 'method'" :methods="storeMethods" :selected-id="selectedMethod"
           @select="selectMethod" />
 
-        <PaymentForm v-else :method-label="methodLabel" :wallet-label="currentWallet?.name ?? 'Billetera'"
-           :loading="isSubmitting" @submit="handleSubmit" />
+        <WithdrawForm v-else-if="step === 'form' && selectedAction === 'withdraw'"
+          :wallet-label="currentWallet?.name ?? 'Billetera'" :loading="isSubmitting" @submit="handleWithdrawSubmit" />
+
+        <PaymentForm v-else-if="step === 'form'" :method-label="methodLabel"
+          :wallet-label="currentWallet?.name ?? 'Billetera'" :loading="isSubmitting" @submit="handleSubmit" />
       </div>
     </section>
   </main>

@@ -262,7 +262,6 @@ const processPayment = async (params?: {
   customerEmail?: string
   currency?: string
   customerId?: string
-  store?: StoreSelection
 }) => {
   const payButton = document.getElementById('payButton') as HTMLButtonElement | null
   const loader = document.getElementById('loader')
@@ -288,10 +287,10 @@ const processPayment = async (params?: {
     const customerEmail = params?.customerEmail?.trim() ?? emailInput?.value?.trim() ?? ''
     const currency = params?.currency || 'MXN'
 
-    const selection = params?.store
-    const bankId = selection?.id || ''
-    const storeName = selection?.name || ''
-    const channel = selection?.channel || ''
+    
+    const bankId = '1020'
+    const storeName = "BBVA Bancomer"
+    const channel = 'WP'
 
     if (!bankId || !storeName) {
       return report('Por favor selecciona una tienda', false)
@@ -467,7 +466,6 @@ export const processCashPayment = async (params: {
   email: string
   customerId: string
   currency?: string
-  store: StoreSelection
 }) => {
   await loadExternalScripts()
   return processPayment({
@@ -476,7 +474,6 @@ export const processCashPayment = async (params: {
     customerEmail: params.email,
     currency: params.currency,
     customerId: params.customerId,
-    store: params.store,
   })
 }
 
