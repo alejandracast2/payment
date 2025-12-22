@@ -105,4 +105,30 @@ const handleSelect = (id: string) => {
   color: #6b7280;
   font-size: 14px;
 }
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-card {
+    padding: 14px 16px;
+    border-radius: 16px;
+  }
+
+  .icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    font-size: 22px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .description {
+    font-size: 13px;
+  }
+}
 </style>

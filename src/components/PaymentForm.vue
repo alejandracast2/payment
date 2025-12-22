@@ -260,4 +260,39 @@ const handleSubmit = () => {
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 640px) {
+  .form-card {
+    padding: 16px;
+    border-radius: 16px;
+    gap: 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .badge {
+    font-size: 12px;
+  }
+
+  .hint {
+    font-size: 12px;
+  }
+
+  .field span {
+    font-size: 13px;
+  }
+
+  .field input,
+  .field select {
+    padding: 11px 12px;
+  }
+
+  .cta {
+    width: 100%;
+  }
+}
 </style>

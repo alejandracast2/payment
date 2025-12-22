@@ -123,4 +123,33 @@ const handleSelect = (id: number) => {
   color: #cbd5e1;
   font-weight: 700;
 }
+
+@media (max-width: 640px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wallet-card {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .badge span {
+    font-size: 16px;
+  }
+
+  .title {
+    font-size: 15px;
+  }
+
+  .chevron {
+    font-size: 16px;
+  }
+}
 </style>

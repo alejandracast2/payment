@@ -247,7 +247,7 @@ const handleSubmit = async (payload: {
               <button v-if="stepPosition > 1" type="button" class="circle-btn" aria-label="Volver" @click="goPrevStep">
                 <span>&lt;</span>
               </button>
-              <p class="eyebrow">Paralela de pagos</p>
+              <p class="eyebrow">Pasarela de pagos</p>
             </div>
             <h1>{{ stepTitle }}</h1>
           </div>
@@ -286,6 +286,8 @@ const handleSubmit = async (payload: {
   min-height: 100vh;
   display: grid;
   place-items: center;
+  position: relative;
+  background: #f8fafc;
   /* padding: 28px 18px 42px;
   background: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.16), transparent 32%),
     radial-gradient(circle at 90% 10%, rgba(34, 197, 94, 0.12), transparent 24%),
@@ -403,17 +405,48 @@ h1 {
 }
 
 @media (max-width: 640px) {
+  .page {
+    padding: 20px 14px 30px;
+    place-items: start center;
+  }
+
+  .blob {
+    width: 320px;
+    height: 320px;
+    filter: blur(90px);
+  }
+
   .card {
-    padding: 18px;
+    padding: 16px;
+    border-radius: 16px;
+    box-shadow:
+      0 18px 40px rgba(15, 23, 42, 0.18),
+      0 6px 14px rgba(15, 23, 42, 0.12);
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 10px;
+  }
+
+  .circle-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+  }
+
+  h1 {
+    font-size: clamp(20px, 6vw, 24px);
   }
 
   .step {
     align-self: flex-start;
+    font-size: 12px;
+    padding: 6px 10px;
   }
 }
 </style>

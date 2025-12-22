@@ -48,11 +48,20 @@ type WithdrawPayload = {
   phone: string
 }
 
+type BankOption = {
+  code: string
+  label: string
+}
+
 const route = useRoute()
 const walletStore = useWalletStore()
 const isSubmitting = ref(false)
 const submitStatus = ref<'idle' | 'success' | 'error'>('idle')
 const submitMessage = ref('')
+const authToken = computed(() => String(walletStore.token || route.query.token || ''))
+const banks = ref<BankOption[]>([])
+const isBanksLoading = ref(false)
+const banksError = ref('')
 
 const form = reactive({
   method: 'spei' as WithdrawPayload['method'],
@@ -70,9 +79,9 @@ const form = reactive({
 })
 
 const identifierLabel = computed(() => {
-  if (form.idType === 'curp') return 'CURP Entry'
-  if (form.idType === 'id') return 'ID Entry'
-  return 'RFC Entry'
+  if (form.idType === 'curp') return 'CURP'
+  if (form.idType === 'id') return 'ND'
+  return 'RFC'
 })
 
 const isNoDocument = computed(() => form.idType === 'id')
@@ -85,6 +94,29 @@ const isIdentifierInvalid = computed(() => {
   return false
 })
 
+const loadBanks = async () => {
+  if (!authToken.value) {
+    banksError.value = 'Falta el token de autorizacion.'
+    return
+  }
+
+  isBanksLoading.value = true
+  banksError.value = ''
+  try {
+    const { data } = await api.get<BankOption[]>('tonder/bancks', {
+      headers: {
+        Authorization: authToken.value,
+      },
+    })
+    banks.value = Array.isArray(data) ? data : []
+  } catch (err) {
+    console.error('Error al cargar los bancos:', err)
+    banksError.value = 'No se pudieron cargar los bancos.'
+    banks.value = []
+  } finally {
+    isBanksLoading.value = false
+  }
+}
 
 const isInterbankMismatch = computed(() => {
   if (!form.interbankCodeConfirm) return false
@@ -93,19 +125,17 @@ const isInterbankMismatch = computed(() => {
 
 const isFormValid = computed(() => {
   const amount = Number(form.amount)
+  const Account_number =String(form.accountNumber)
   const hasBasics =
     amount > 0 &&
     form.identifier.trim().length > 0 &&
-    form.accountNumber.trim().length > 0 &&
+    Account_number.trim().length > 0 &&
     form.email.trim().length > 0 &&
+    String(form.phone).trim().length > 0 &&
     !isIdentifierInvalid.value
 
   if (form.method === 'card') {
-    return Boolean(
-      hasBasics &&
-        form.beneficiaryName.trim().length > 0 &&
-        form.interbankCode.trim().length > 0,
-    )
+    return Boolean(hasBasics)
   }
 
   return Boolean(
@@ -113,11 +143,20 @@ const isFormValid = computed(() => {
       form.beneficiaryName.trim().length > 0 &&
       form.beneficiaryLastName.trim().length > 0 &&
       form.beneficiaryInstitution.trim().length > 0 &&
-      form.phone.trim().length > 0 &&
       form.interbankCode.trim().length > 0 &&
       !isInterbankMismatch.value,
   )
 })
+
+watch(
+  () => form.method,
+  (method) => {
+    if (method !== 'card') return
+    form.beneficiaryName = ''
+    form.interbankCode = ''
+    form.interbankCodeConfirm = ''
+  },
+)
 
 watch(
   () => form.idType,
@@ -126,6 +165,21 @@ watch(
       form.identifier = 'ND'
     } else if (form.identifier.trim() === 'ND') {
       form.identifier = ''
+    }
+  },
+  { immediate: true },
+)
+
+watch(
+  authToken,
+  (token) => {
+    if (!token) {
+      banksError.value = 'Falta el token de autorizacion.'
+      banks.value = []
+      return
+    }
+    if (!banks.value.length && !isBanksLoading.value) {
+      void loadBanks()
     }
   },
   { immediate: true },
@@ -140,27 +194,28 @@ const buildWithdrawalBody = (): WithdrawalRequest => {
         ? { beneficiary_curp: identifier }
         : { beneficiary_rfc: 'ND' }
 
-  const tonderBase = {
+  const tonder = {
     amount: Number(form.amount || 0),
     currency: String(route.query.currency ?? 'MXN'),
     transfer_method: form.method === 'spei' ? 'SPEI' : 'DEBIT_CARD',
-    beneficiary_account: form.accountNumber.trim(),
+    beneficiary_account: String(form.accountNumber).trim(),
     beneficiary_name: form.beneficiaryName.trim(),
-    interbank_code: form.interbankCode.trim(),
+    beneficiary_last_name: form.beneficiaryLastName.trim(),
+    interbank_code: form.method =='card' ? '646180567300000006': form.interbankCode.trim(),
+    beneficiary_institution: form.method =='card' ? '97846': form.beneficiaryInstitution.trim(),
     email: form.email.trim(),
+    phone: String(form.phone).trim(),
     description: form.method === 'spei' ? 'withdrawal' : 'test DEBIT_CARD RFC fee01',
     ...idFields,
   }
 
-  const tonder =
-    form.method === 'spei'
-      ? {
-          ...tonderBase,
-          beneficiary_last_name: form.beneficiaryLastName.trim(),
-          beneficiary_institution: form.beneficiaryInstitution.trim(),
-          phone: form.phone.trim(),
-        }
-      : tonderBase
+  // const tonder =
+  //   form.method === 'spei'
+  //     ? {
+  //         ...tonderBase,
+  //         beneficiary_institution: form.beneficiaryInstitution.trim(),
+  //       }
+  //     : tonderBase
 
   return {
     internal: {
@@ -187,18 +242,14 @@ const handleSubmit = async () => {
   submitMessage.value = ''
   try {
     const body = buildWithdrawalBody()
-    await api.post('tonder/withdrawals', body, {
-      headers: {
-        Authorization: token,
-        'Content-Type': 'application/json',
-      },
-    })
+    await api.post('tonder/withdrawals', body)
     submitStatus.value = 'success'
     submitMessage.value = 'Transferencia generada correctamente.'
   } catch (err) {
     console.error('Error al crear el retiro:', err)
     submitStatus.value = 'error'
-    submitMessage.value = 'Hubo un error al crear el retiro.'
+    const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+    submitMessage.value = message || 'Hubo un error al crear el retiro.'
   } finally {
     isSubmitting.value = false
   }
@@ -248,24 +299,32 @@ const handleSubmit = async () => {
     <div class="fields">
       <div class="column">
         <label class="field">
-          <span>Beneficiary Name <em class="required">*</em></span>
+          <span>Nombre <em class="required">*</em></span>
           <input v-model="form.beneficiaryName" required type="text" placeholder="Ej. Maria Lopez" />
         </label>
 
-        <label v-if="form.method === 'spei'" class="field">
-          <span>Beneficiary Last Name <em class="required">*</em></span>
+        <label class="field">
+          <span>Apellido <em class="required">*</em></span>
           <input v-model="form.beneficiaryLastName" required type="text" placeholder="Ej. Garcia" />
         </label>
 
         <label v-if="form.method === 'spei'" class="field">
-          <span>Beneficiary Institution <em class="required">*</em></span>
-          <input v-model="form.beneficiaryInstitution" required type="text" placeholder="Banco destino" />
+          <span>Banco <em class="required">*</em></span>
+          <select v-model="form.beneficiaryInstitution" required :disabled="isBanksLoading">
+            <option value="" disabled>
+              {{ isBanksLoading ? 'Cargando bancos...' : 'Selecciona un banco' }}
+            </option>
+            <option v-for="bank in banks" :key="bank.code" :value="bank.code">
+              {{ bank.label }}
+            </option>
+          </select>
+          <span v-if="banksError" class="error-text">{{ banksError }}</span>
         </label>
 
 
         <label class="field">
-          <span>{{ form.method === 'card' ? 'Card Number' : 'Beneficiary Account' }} <em class="required">*</em></span>
-          <input v-model="form.accountNumber" required type="text"
+          <span>{{ form.method === 'card' ? 'Número de tarjeta' : 'Número de cuenta' }} <em class="required">*</em></span>
+          <input v-model="form.accountNumber" required type="number"
             :placeholder="form.method === 'card' ? '4111111111111111' : '0000000000'" />
         </label>
 
@@ -274,10 +333,6 @@ const handleSubmit = async () => {
           <input v-model="form.email" required type="email" placeholder="ejemplo@email.com" />
         </label>
 
-        <label v-if="form.method === 'spei'" class="field">
-          <span>Phone <em class="required">*</em></span>
-          <input v-model="form.phone" required type="tel" placeholder="5512345678" />
-        </label>
 
       </div>
 
@@ -291,20 +346,24 @@ const handleSubmit = async () => {
         </label>
 
         <label class="field">
-          <span>Currency Amount <em class="required">*</em></span>
+          <span>Monto <em class="required">*</em></span>
           <input v-model="form.amount" required type="number" min="0" step="0.01" placeholder="$0.00" />
         </label>
 
-        <label class="field">
-          <span>Interbank Code <em class="required">*</em></span>
+        <label v-if="form.method === 'spei'" class="field">
+          <span>Clabe Interbancaria<em class="required">*</em></span>
           <input v-model="form.interbankCode" required type="text" placeholder="CLABE" />
         </label>
 
         <label v-if="form.method === 'spei'" class="field">
-          <span>Interbank Code</span>
+          <span>Clabe Interbancaria (confirmación)</span>
           <input v-model="form.interbankCodeConfirm" type="text" placeholder="Confirmar CLABE"
             :class="{ error: isInterbankMismatch }" />
           <span v-if="isInterbankMismatch" class="error-text">Las claves no coinciden.</span>
+        </label>
+        <label class="field">
+          <span>Celular <em class="required">*</em></span>
+          <input v-model="form.phone" required type="number" placeholder="5512345678" />
         </label>
       </div>
     </div>
@@ -488,7 +547,26 @@ const handleSubmit = async () => {
     background 140ms ease;
 }
 
+.field select {
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  color: #0f172a;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
+}
+
 .field input:focus {
+  outline: none;
+  border-color: #3f83f8;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(63, 131, 248, 0.16);
+}
+
+.field select:focus {
   outline: none;
   border-color: #3f83f8;
   background: #fff;
@@ -625,6 +703,49 @@ const handleSubmit = async () => {
 @media (max-width: 760px) {
   .fields {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .withdraw-card {
+    padding: 16px;
+    border-radius: 16px;
+    gap: 14px;
+  }
+
+  .top-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .segmented {
+    width: 100%;
+  }
+
+  .segment {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+  }
+
+  .id-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .id-tabs {
+    width: 100%;
+  }
+
+  .id-tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 10px;
+  }
+
+  .cta {
+    width: 100%;
   }
 }
 </style>

@@ -134,4 +134,30 @@ input {
   color: #6b7280;
   font-size: 13px;
 }
+
+@media (max-width: 640px) {
+  .list {
+    gap: 8px;
+  }
+
+  .item {
+    padding: 12px 14px;
+    gap: 10px;
+    border-radius: 12px;
+  }
+
+  .bullet {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bullet span {
+    width: 9px;
+    height: 9px;
+  }
+
+  .name {
+    font-size: 15px;
+  }
+}
 </style>
