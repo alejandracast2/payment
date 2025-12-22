@@ -5,8 +5,7 @@
   <div class="success">
     <div class="icon" aria-hidden="true">✓</div>
     <h2>Solicitud recibida</h2>
-    <p>Tu solicitud de pago fue exitosa. En breve recibiras la confirmacion.</p>
-    <a class="back-link" href="/">Volver al inicio</a>
+    <p>Tu solicitud de pago fue exitosa.</p>
   </div>
 </template>
 
