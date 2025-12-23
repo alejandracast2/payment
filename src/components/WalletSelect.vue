@@ -30,7 +30,7 @@ const handleSelect = (id: number) => {
     >
       <div
         class="badge"
-        :style="{ background:'linear-gradient(135deg, #d9e8ff, #bcd1ff)' }"
+        :style="{ background: 'var(--badge-gradient)' }"
       >
         <span>{{ wallet.name?.[0]?.toUpperCase() ?? '?' }}</span>
       </div>
@@ -56,32 +56,32 @@ const handleSelect = (id: number) => {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(240, 66, 66, 0.35);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.8);
+  background: #232121;
   box-shadow:
-    0 12px 32px rgba(16, 24, 40, 0.08),
-    0 2px 6px rgba(16, 24, 40, 0.08);
+    0 12px 32px rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.4);
   transition:
     transform 160ms ease,
     box-shadow 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    filter 160ms ease;
   text-align: left;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .wallet-card:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 16px 38px rgba(16, 24, 40, 0.14),
-    0 4px 10px rgba(16, 24, 40, 0.1);
+    0 18px 42px rgba(0, 0, 0, 0.6),
+    0 4px 10px rgba(0, 0, 0, 0.45);
+  filter: brightness(1.04);
 }
 
 .wallet-card.active {
-  border-color: rgba(63, 131, 248, 0.35);
-  box-shadow:
-    0 16px 40px rgba(63, 131, 248, 0.18),
-    0 4px 12px rgba(63, 131, 248, 0.12);
+  border-color: rgba(240, 66, 66, 0.7);
+  box-shadow: var(--button-shadow);
 }
 
 .badge {
@@ -92,8 +92,8 @@ const handleSelect = (id: number) => {
   place-items: center;
   font-weight: 700;
   letter-spacing: 0.4px;
-  color: #0b1021;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .badge span {
@@ -114,13 +114,13 @@ const handleSelect = (id: number) => {
 
 .subtitle {
   margin: 0;
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
 .chevron {
   font-size: 18px;
-  color: #cbd5e1;
+  color: var(--text-muted);
   font-weight: 700;
 }
 

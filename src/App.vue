@@ -279,7 +279,23 @@ const handleSubmit = async (payload: {
 :global(body) {
   margin: 0;
   font-family: 'Manrope', 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  /* background: #0f172a; */
+  background: #202021;
+  color: #f8fafc;
+  color-scheme: dark;
+  --bg: #0b0b0b;
+  --bg-elev: #242525;
+  --surface: #2F3330;
+  --surface-2: #232121;
+  --surface-strong: #101010;
+  --border: rgba(56, 56, 57, 0.18);
+  --text: #f8fafc;
+  --text-soft: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --button-gradient: linear-gradient(rgb(240, 66, 66) 0%, rgb(0, 0, 0) 100%);
+  --button-shadow: 0 14px 32px rgba(240, 66, 66, 0.25), 0 6px 12px rgba(0, 0, 0, 0.6);
+  --focus-ring: rgba(240, 66, 66, 0.35);
+  --badge-gradient: linear-gradient(135deg, rgba(240, 66, 66, 0.45), rgba(0, 0, 0, 0.9));
 }
 
 .page {
@@ -287,12 +303,11 @@ const handleSubmit = async (payload: {
   display: grid;
   place-items: center;
   position: relative;
-  background: #f8fafc;
-  /* padding: 28px 18px 42px;
-  background: radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.16), transparent 32%),
-    radial-gradient(circle at 90% 10%, rgba(34, 197, 94, 0.12), transparent 24%),
-    radial-gradient(circle at 80% 80%, rgba(37, 99, 235, 0.12), transparent 30%),
-    #0f172a; */
+  background:
+    radial-gradient(circle at 10% 20%, rgba(240, 66, 66, 0.22), transparent 38%),
+    radial-gradient(circle at 85% 15%, rgba(47, 34, 26, 0.12), transparent 35%),
+    radial-gradient(circle at 75% 80%, rgba(44, 41, 38, 0.7), transparent 48%),
+    var(--bg);
 }
 
 .bg-gradients {
@@ -311,13 +326,11 @@ const handleSubmit = async (payload: {
 }
 
 .blob-green {
-  background: #22c55e;
   top: -140px;
   left: -120px;
 }
 
 .blob-blue {
-  background: #3b82f6;
   bottom: -180px;
   right: -160px;
 }
@@ -326,14 +339,14 @@ const handleSubmit = async (payload: {
   position: relative;
   z-index: 1;
   width: min(960px, 100%);
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--surface);
   border-radius: 20px;
   padding: 22px 24px 26px;
   box-shadow:
-    0 24px 64px rgba(15, 23, 42, 0.24),
-    0 6px 18px rgba(15, 23, 42, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(6px);
+    0 24px 64px rgba(0, 0, 0, 0.6),
+    0 6px 18px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
 }
 
 .header {
@@ -354,24 +367,26 @@ const handleSubmit = async (payload: {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  color: #0f172a;
+  border: 1px solid rgba(240, 66, 66, 0.45);
+  background: var(--button-gradient);
+  color: #fff;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.55);
   display: grid;
   place-items: center;
   transition:
     transform 140ms ease,
     box-shadow 140ms ease,
-    border-color 140ms ease;
+    border-color 140ms ease,
+    filter 140ms ease;
 }
 
 .circle-btn:hover {
   transform: translateY(-1px);
-  border-color: #cbd5e1;
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
+  border-color: rgba(240, 66, 66, 0.7);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.65);
+  filter: brightness(1.05);
 }
 
 .eyebrow {
@@ -379,22 +394,22 @@ const handleSubmit = async (payload: {
   font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #6b7280;
+  color: var(--text-muted);
   font-weight: 700;
 }
 
 h1 {
   margin: 0;
-  color: #0f172a;
+  color: var(--text);
   font-size: clamp(22px, 3vw, 28px);
   line-height: 1.2;
 }
 
 .step {
   margin: 0;
-  color: #475569;
+  color: var(--text-soft);
   font-weight: 700;
-  background: #f1f5f9;
+  background: rgba(89, 88, 88, 0.7);
   padding: 8px 12px;
   border-radius: 12px;
   font-size: 13px;
@@ -420,8 +435,8 @@ h1 {
     padding: 16px;
     border-radius: 16px;
     box-shadow:
-      0 18px 40px rgba(15, 23, 42, 0.18),
-      0 6px 14px rgba(15, 23, 42, 0.12);
+      0 18px 40px rgba(0, 0, 0, 0.55),
+      0 6px 14px rgba(0, 0, 0, 0.45);
   }
 
   .header {

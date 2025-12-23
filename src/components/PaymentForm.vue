@@ -123,13 +123,13 @@ const handleSubmit = () => {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--surface);
   border-radius: 18px;
   padding: 18px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
   box-shadow:
-    0 16px 36px rgba(16, 24, 40, 0.12),
-    0 3px 10px rgba(16, 24, 40, 0.12);
+    0 16px 36px rgba(0, 0, 0, 0.55),
+    0 3px 10px rgba(0, 0, 0, 0.45);
 }
 
 .header {
@@ -141,15 +141,16 @@ const handleSubmit = () => {
 .badge {
   padding: 6px 12px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #4f46e5, #60a5fa);
-  color: #fff;
+  background: rgba(240, 66, 66, 0.18);
+  color: var(--text);
+  border: 1px solid rgba(240, 66, 66, 0.35);
   font-weight: 700;
   font-size: 13px;
 }
 
 .hint {
   margin: 0;
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -157,7 +158,7 @@ const handleSubmit = () => {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  color: #0f172a;
+  color: var(--text-soft);
   font-weight: 600;
 }
 
@@ -169,9 +170,9 @@ const handleSubmit = () => {
 .field select {
   padding: 12px 12px;
   border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
-  color: #0f172a;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease,
@@ -181,17 +182,17 @@ const handleSubmit = () => {
 .field input:focus,
 .field select:focus {
   outline: none;
-  border-color: #3f83f8;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(63, 131, 248, 0.16);
+  border-color: rgba(240, 66, 66, 0.7);
+  background: #000000;
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .field select option {
-  color: #0f172a;
+  color: #e2e8f0;
 }
 
 .store-category {
-  color: #64748b;
+  color: var(--text-muted);
   font-weight: 700;
 }
 
@@ -199,8 +200,8 @@ const handleSubmit = () => {
   margin-top: 8px;
   padding: 8px 10px;
   border-radius: 10px;
-  background: #f1f5f9;
-  color: #0f172a;
+  background: rgba(15, 23, 42, 0.75);
+  color: var(--text-soft);
   font-size: 13px;
   font-weight: 600;
 }
@@ -212,7 +213,7 @@ const handleSubmit = () => {
   padding: 13px 14px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  background: var(--button-gradient);
   color: #fff;
   font-weight: 700;
   font-size: 15px;
@@ -221,9 +222,7 @@ const handleSubmit = () => {
     transform 140ms ease,
     box-shadow 140ms ease,
     filter 140ms ease;
-  box-shadow:
-    0 14px 32px rgba(37, 99, 235, 0.35),
-    0 6px 12px rgba(37, 99, 235, 0.2);
+  box-shadow: var(--button-shadow);
 }
 
 .cta:hover {
@@ -235,7 +234,7 @@ const handleSubmit = () => {
   transform: translateY(0);
 }
 .cta:disabled {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
   box-shadow: none;
   transform: none;

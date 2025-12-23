@@ -20,7 +20,7 @@
   height: 54px;
   margin: 0 auto 12px;
   border-radius: 50%;
-  background: #22c55e;
+  background: #16a34a;
   color: #fff;
   display: grid;
   place-items: center;
@@ -30,12 +30,12 @@
 
 h2 {
   margin: 0 0 8px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 p {
   margin: 0 0 16px;
-  color: #475569;
+  color: var(--text-muted);
 }
 
 .back-link {
@@ -44,7 +44,7 @@ p {
   gap: 6px;
   padding: 10px 16px;
   border-radius: 999px;
-  background: #0f172a;
+  background: var(--button-gradient);
   color: #fff;
   text-decoration: none;
   font-weight: 700;
@@ -52,6 +52,6 @@ p {
 }
 
 .back-link:hover {
-  background: #1e293b;
+  filter: brightness(1.05);
 }
 </style>
