@@ -50,7 +50,7 @@ const PAYMENT_SUCCESS_PATH = '/payment-success'
 const TONDER_CONFIG = {
   mode: 'stage',
   apiKey: '1cccb499af3ad62bfb10a6efab1b07910b0bc39b',
-  returnUrl: new URL(PAYMENT_SUCCESS_PATH, window.location.origin).toString(),
+  returnUrl: `${window.location.origin}/#${PAYMENT_SUCCESS_PATH}`,
 }
 
 let liteCheckout: LiteInlineCheckout | null = null

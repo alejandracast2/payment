@@ -25,9 +25,10 @@ const handleSelect = (id: number) => {
   <div class="list">
     <label v-for="method in props.methods" :key="method.id" class="item"
       :class="{ active: props.selectedId === method.id }"
-      :style="{ borderColor: props.selectedId === method.id ? `${method.accent ?? '#b43131'}40` : 'transparent' }">
+      :style="{ borderColor: props.selectedId === method.id ? `${method.accent ?? '#b43131'}40` : 'transparent' }"
+      @click="handleSelect(method.id)">
       <input type="radio" name="payment-method" :value="method.id" :checked="props.selectedId === method.id"
-        @change="handleSelect(method.id)" />
+      />
       <div class="bullet" :style="{ borderColor: method.accent ?? '#b43131' }">
         <span
           :style="{ background: props.selectedId === method.id ? method.accent ?? '#b43131' : 'rgba(148, 163, 184, 0.45)' }" />
