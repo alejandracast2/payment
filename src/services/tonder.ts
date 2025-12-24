@@ -1,4 +1,6 @@
-export type PaymentMethodId = 'Oxxo' | 'SPEI' | 'Efectivo'
+import {api} from '@/api/axios'
+
+
 
 type BrowserInfo = {
   javascript_enabled: boolean
@@ -68,6 +70,8 @@ export type TonderPaymentPayload = {
   amount?: number
 }
 
+
+
 export type TonderPaymentResponse = {
   status?: number
   message?: string
@@ -113,10 +117,15 @@ const TONDER_CONFIG = {
   returnUrl: `${window.location.origin}/#${PAYMENT_SUCCESS_PATH}`,
 }
 
-const PAYMENT_METHOD_MAP: Record<PaymentMethodId, string> = {
-  Oxxo: 'oxxopay',
-  SPEI: 'spei',
-  Efectivo: 'cash',
+const trackOxxoPayment = async (params: { customerId: string; payload: TonderPaymentPayload }) => {
+  const body = {
+    transactionId: params.customerId,
+    event: 'payment oxxopay',
+    dataEvent: JSON.stringify(params.payload),
+  }
+
+  const { data } = await api.post('trackings', body)
+  return data
 }
 
 let liteCheckout: LiteInlineCheckout | null = null
@@ -309,7 +318,11 @@ export const processTonderPayment = async (params: {
     customerId: params.customerId,
     currency: params.currency || 'MXN',
   })
-
+  try {
+    await trackOxxoPayment({ customerId: params.customerId, payload })
+  } catch (error) {
+    console.warn('[TONDER] tracking failed', error)
+  }
   const response = await checkout.payment(payload)
   return handlePaymentResponse(response)
 }

@@ -1,3 +1,4 @@
+import {api} from '@/api/axios'
 import type { TonderPaymentPayload, TonderPaymentResponse } from './tonder'
 
 type BrowserInfo = {
@@ -8,6 +9,17 @@ type BrowserInfo = {
   screen_width: number
   screen_height: number
   user_agent: string
+}
+
+const trackSpeiPayment = async (params: { customerId: string; payload: TonderPaymentPayload }) => {
+  const body = {
+    transactionId: params.customerId,
+    event: 'payment spei',
+    dataEvent: JSON.stringify(params.payload),
+  }
+
+  const { data } = await api.post('trackings', body)
+  return data
 }
 
 type LiteInlineCheckout = {
@@ -236,6 +248,11 @@ export const processSpeiPayment = async (params: {
   })
 
   console.log('[SPEI] Payload preparado', payload)
+  try {
+    await trackSpeiPayment({ customerId: params.customerId, payload })
+  } catch (error) {
+    console.warn('[SPEI] tracking failed', error)
+  }
   const response = await checkout.payment(payload)
   console.log('[SPEI] Respuesta recibida', response)
   return handlePaymentResponse(response)

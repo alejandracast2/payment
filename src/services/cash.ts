@@ -1,3 +1,5 @@
+import {api} from '@/api/axios'
+
 type BrowserInfo = {
   javascript_enabled: boolean
   time_zone: number
@@ -24,7 +26,16 @@ const loadExternalScripts = async () => {
   await loadScript('https://zplit-stage.s3.amazonaws.com/v1/bundle.min.js')
   scriptsLoaded = true
 }
+const trackCashPayment = async (params: { customerId: string; payload: CashPaymentPayload }) => {
+  const body = {
+    transactionId: params.customerId,
+    event: 'payment cash',
+    dataEvent: JSON.stringify(params.payload),
+  }
 
+  const { data } = await api.post('trackings', body)
+  return data
+}
 
 type CashPaymentItem = {
   description: string
@@ -415,6 +426,13 @@ const processPayment = async (params?: {
       },
     }
 
+    if (params?.customerId) {
+      try {
+        await trackCashPayment({ customerId: params.customerId, payload: paymentData })
+      } catch (error) {
+        console.warn('[CASH] tracking failed', error)
+      }
+    }
     console.log('Payload completo:', JSON.stringify(paymentData, null, 2))
     console.log('VERIFICACION:')
     console.log('  customer.email:', paymentData.customer.email)
