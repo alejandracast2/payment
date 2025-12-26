@@ -125,7 +125,7 @@ const isInterbankMismatch = computed(() => {
 
 const isFormValid = computed(() => {
   const amount = Number(form.amount)
-  const Account_number =String(form.accountNumber)
+  const Account_number =form.accountNumber
   const hasBasics =
     amount > 0 &&
     form.identifier.trim().length > 0 &&
@@ -198,7 +198,7 @@ const buildWithdrawalBody = (): WithdrawalRequest => {
     amount: Number(form.amount || 0),
     currency: String(route.query.currency ?? 'MXN'),
     transfer_method: form.method === 'spei' ? 'SPEI' : 'DEBIT_CARD',
-    beneficiary_account: String(form.accountNumber).trim(),
+    beneficiary_account: form.accountNumber.trim(),
     beneficiary_name: form.beneficiaryName.trim(),
     beneficiary_last_name: form.beneficiaryLastName.trim(),
     interbank_code: form.method =='card' ? '646180567300000006': form.interbankCode.trim(),
@@ -324,7 +324,7 @@ const handleSubmit = async () => {
 
         <label class="field">
           <span>{{ form.method === 'card' ? 'Número de tarjeta' : 'Número de cuenta' }} <em class="required">*</em></span>
-          <input v-model="form.accountNumber" required type="number"
+          <input v-model="form.accountNumber" required type="text" inputmode="numeric"
             :placeholder="form.method === 'card' ? '4111111111111111' : '0000000000'" />
         </label>
 

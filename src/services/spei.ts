@@ -18,7 +18,7 @@ const trackSpeiPayment = async (params: { customerId: string; payload: TonderPay
     dataEvent: JSON.stringify(params.payload),
   }
 
-  const { data } = await api.post('trackings', body)
+  const { data } = await api.post('trackings/by-uuid', body)
   return data
 }
 

@@ -33,7 +33,7 @@ const trackCashPayment = async (params: { customerId: string; payload: CashPayme
     dataEvent: JSON.stringify(params.payload),
   }
 
-  const { data } = await api.post('trackings', body)
+  const { data } = await api.post('trackings/by-uuid', body)
   return data
 }
 
